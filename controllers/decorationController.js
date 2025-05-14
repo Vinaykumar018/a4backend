@@ -107,11 +107,12 @@ exports.updateProduct = [
 ];
 
 
-// GET PRODUCT BY ID
+// GET PRODUCT BY product_id
 exports.getProductById = async (req, res) => {
   try {
-    const { id } = req.params;
-    const product = await Product.findById(id);
+    const { id } = req.params; // here 'id' is actually the product_id
+    const product = await Product.findOne({ product_id: id });
+
     if (!product) return res.status(404).json({ message: 'Product not found', status: 0 });
 
     res.json({ message: 'Product found', status: 1, data: product });

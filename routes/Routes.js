@@ -14,6 +14,18 @@ const {getAllRatingsForProduct ,createRating,updateRating ,getRatingById ,delete
 const {addChildCategory,removeChildCategory}=require('../controllers/categoryController')
 
 
+const {
+ getCart,clearCart,addItem,removeItem,updateItem
+} = require('../controllers/cartController');
+
+
+
+const {
+  createOrder,getAllOrders,getOrder,updateOrderStatus,cancelOrder
+   
+}=require("../controllers/orderController")
+
+
 //api authentication
 router.post('/signin', signin);
 router.post('/signin', (req, res, next) => {
@@ -58,5 +70,24 @@ router.put('/rating/update-rating/:id', authenticateToken, updateRating); // Upd
 router.get('/rating/get-rating/:id', authenticateToken, getRatingById); // Get a rating by its ID
 router.delete('/rating/delete-rating/:id', authenticateToken, deleteRating); // Delete a rating by its ID
 router.get('/rating/product/:product_id', authenticateToken, getAllRatingsForProduct); // Get all ratings for a product
+
+
+//cart 
+// cart
+router.get('/cart/:userID', authenticateToken, getCart);            // Get cart for a user
+router.post('/cart/add', authenticateToken, addItem);               // Add item to cart
+router.put('/cart/update/:userID/:product_id', authenticateToken, updateItem); // Update quantity or info
+router.delete('/cart/remove/:userID', authenticateToken, removeItem); // Remove specific product
+router.delete('/cart/clear/:userID', authenticateToken, clearCart); // Clear all items in cart
+
+
+
+
+//order
+router.post('/create/order', authenticateToken,createOrder); 
+router.get('/get/orders', authenticateToken,getAllOrders);
+router.get('/get/order/:id', authenticateToken,getOrder); 
+
+
 
 module.exports = router;
