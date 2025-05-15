@@ -106,6 +106,19 @@ exports.updateProduct = [
   }
 ];
 
+// GET PRODUCT BY _id
+exports.getProductBy_id = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const product = await Product.findById(id);
+    if (!product) return res.status(404).json({ message: 'Product not found', status: 0 });
+
+    res.json({ message: 'Product found', status: 1, data: product });
+  } catch (err) {
+    res.status(500).json({ message: err.message, status: 0 });
+  }
+};
+
 
 // GET PRODUCT BY product_id
 exports.getProductById = async (req, res) => {

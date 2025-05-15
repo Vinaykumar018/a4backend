@@ -5,7 +5,7 @@ const { signin, authenticateToken } = require('../middlewares/authMiddleware');
 const { createUser, loginUser,updateUser,getUserById } = require('../controllers/userController');
 const {createCategory,getCategoryById,updateCategory,deleteCategory, getAllCategories }=require('../controllers/categoryController')
 
-const {createProduct,updateProduct ,getProductById,deleteProduct ,getAllProducts }=require('../controllers/decorationController')
+const {createProduct,updateProduct ,getProductById,deleteProduct ,getAllProducts,getProductBy_id }=require('../controllers/decorationController')
 
 
 const {getAllRatingsForProduct ,createRating,updateRating ,getRatingById ,deleteRating  }=require('../controllers/ratingController')
@@ -21,9 +21,9 @@ const {
 
 
 const {
-  createOrder,getAllOrders,getOrder,updateOrderStatus,cancelOrder
+  createDecorationOrder,getAllDecorationOrders,getDecorationOrder,updateDecorationOrderStatus,cancelDecorationOrder
    
-}=require("../controllers/orderController")
+}=require("../controllers/decorationOrderController")
 
 
 //api authentication
@@ -59,6 +59,7 @@ router.delete('/category/remove-child-category/:id', authenticateToken, removeCh
 router.post('/decoration/create-product', authenticateToken, createProduct);
 router.put('/decoration/update-product/:id', authenticateToken, updateProduct);
 router.get('/decoration/get-product/:id', authenticateToken, getProductById);
+router.get('/decoration/get-product-by-id/:id', authenticateToken, getProductBy_id);
 router.delete('/decoration/delete-product/:id', authenticateToken, deleteProduct);
 router.get('/decoration/get-all-products', authenticateToken, getAllProducts);
 
@@ -84,9 +85,9 @@ router.delete('/cart/clear/:userID', authenticateToken, clearCart); // Clear all
 
 
 //order
-router.post('/create/order', authenticateToken,createOrder); 
-router.get('/get/orders', authenticateToken,getAllOrders);
-router.get('/get/order/:id', authenticateToken,getOrder); 
+router.post('/create/decoration/order', authenticateToken,createDecorationOrder); 
+router.get('/get/decoration/orders', authenticateToken,getAllDecorationOrders);
+router.get('/get/decoration/order/:id', authenticateToken,getDecorationOrder); 
 
 
 

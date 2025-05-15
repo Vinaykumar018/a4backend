@@ -1,8 +1,8 @@
-const Order = require('../model/orderSchema') // Your schema file
+const Order = require('../model/decorationOrderSchema') // Your schema file
 
 
 // Create New Order
-exports.createOrder = async (req, res) => {
+exports.createDecorationOrder = async (req, res) => {
   try {
     // Generate random 6-digit number
     const randomSuffix = Math.floor(100000 + Math.random() * 900000);
@@ -31,7 +31,7 @@ exports.createOrder = async (req, res) => {
 
 
 // Get All Orders
-exports.getAllOrders = async (req, res) => {
+exports.getAllDecorationOrders = async (req, res) => {
   try {
     const orders = await Order.find();
     res.status(200).json({
@@ -48,7 +48,7 @@ exports.getAllOrders = async (req, res) => {
 };
 
 // Get Single Order
-exports.getOrder = async (req, res) => {
+exports.getDecorationOrder = async (req, res) => {
   try {
     const order = await Order.findOne({ order_id: req.params.id });
     
@@ -73,7 +73,7 @@ exports.getOrder = async (req, res) => {
 
 
 // Update Order Status
-exports.updateOrderStatus = async (req, res) => {
+exports.updateDecorationOrderStatus = async (req, res) => {
   try {
     const order = await Order.findByIdAndUpdate(
       req.params.id,
@@ -101,7 +101,7 @@ exports.updateOrderStatus = async (req, res) => {
 };
 
 // Delete Order
-exports.cancelOrder = async (req, res) => {
+exports.cancelDecorationOrder = async (req, res) => {
   try {
     const { cancellationReason } = req.body;
     

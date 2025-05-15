@@ -75,6 +75,6 @@ const orderSchema = new Schema({
 });
 
 // Create the model
-const Order = mongoose.model('Order', orderSchema);
+const Order = mongoose.model('a4-decoration-orders', orderSchema);
 
 module.exports = Order;
