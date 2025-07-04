@@ -46,7 +46,7 @@ const addItem = async (req, res) => {
     for (let item of items) {
       const { product_id, product_name, quantity, pinCode, service_date, service_time } = item;
 
-      if (!product_id || !product_name || !quantity) {
+      if (!product_id || !product_name ) {
         return res.status(400).json({
           message: 'Missing required fields for one or more items',
         });
@@ -111,13 +111,13 @@ const addItem = async (req, res) => {
 // @access  Private
 const updateItem = async (req, res) => {
   try {
-    const { userId, itemId } = req.params;
+    const { userId, productId } = req.params;
     const updates = req.body;
 
     const cart = await Cart.findOneAndUpdate(
       { 
         userID: userId, 
-        'items._id': itemId 
+        'items.product_id': productId // Changed to search by product_id
       },
       { 
         $set: {
@@ -145,7 +145,6 @@ const updateItem = async (req, res) => {
     });
   }
 };
-
 // @desc    Remove item from cart
 // @route   DELETE /api/cart/:userId/:itemId
 // @access  Private

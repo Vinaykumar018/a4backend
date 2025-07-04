@@ -49,7 +49,7 @@ const orderSchema = new Schema({
     order_status: {
       type: String,
       default: 'processing',
-      enum: ['processing', 'shipped', 'delivered', 'cancelled', 'returned'],
+      enum: ['pending','processing', 'shipped', 'delivered', 'cancelled', 'returned','confirmed'],
     },
     order_requested_date: {
       type: String,
@@ -75,6 +75,6 @@ const orderSchema = new Schema({
 });
 
 // Create the model
-const Order = mongoose.model('a4-decoration-orders', orderSchema);
+const Order = mongoose.model('a4-orders', orderSchema);
 
 module.exports = Order;
