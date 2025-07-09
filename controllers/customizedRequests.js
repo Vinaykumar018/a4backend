@@ -42,7 +42,19 @@ const validateInputs = (req, res, requiredFields) => {
 // CREATE CUSTOMIZED REQUEST
 exports.createCustomizedRequest = async (req, res) => {
   try {
-    const requiredFields = ['product_id', 'user_id', 'phone_number', 'name', 'event_date', 'guest_count', 'food_preference', 'budget_range'];
+    const requiredFields = [
+      'product_id',
+      'user_id',
+      'phone_number',
+      'name',
+      'event_date',
+      'guest_count',
+      'food_preference',
+      'budget_range',
+      'requestedEventId',
+      'requestedIdName',
+      'requestedEventImage'
+    ];
     const validationError = validateInputs(req, res, requiredFields);
     if (validationError) return validationError;
 

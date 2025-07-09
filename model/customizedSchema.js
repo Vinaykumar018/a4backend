@@ -52,6 +52,18 @@ const customizedSchema = new mongoose.Schema(
     },
     final_price: {
       type: Number
+    },
+    requestedEventId: {
+      type: String,
+      required: true,
+    },
+    requestedIdName: {
+      type: String,
+      required: true,
+    },
+    requestedEventImage: {
+      type: String,
+      required: true,
     }
   },
   { timestamps: true }

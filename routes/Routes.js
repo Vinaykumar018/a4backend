@@ -7,6 +7,8 @@ const {
   loginUser,
   updateUser,
   getUserById,
+  forgotPassword,
+  getAllUsers
 } = require('../controllers/userController');
 const {
   createCategory,
@@ -64,6 +66,7 @@ const {
   verifyPayment,
   getOrdersByCategory,
   getOrdersByUserId,
+  getOrderByProductID
 } = require('../controllers/OrderController');
 
 
@@ -99,11 +102,13 @@ router.post('/signin', (req, res, next) => {
 });
 
 //user authentication
+router.get('/user/get-user', authenticateToken, getAllUsers);
 router.post('/user/create-user', authenticateToken, createUser);
 router.post('/user/login-user', authenticateToken, loginUser);
 router.put('/user/update-user/:id', authenticateToken, updateUser);
 router.get('/user/get-user/:id', authenticateToken, getUserById);
 router.get('/auth/google', authenticateToken, googleAuth);
+router.post('/auth/forget-password', authenticateToken, forgotPassword);
 
 //category
 
@@ -201,6 +206,8 @@ router.get(
   authenticateToken,
   getOrdersByCategory,
 );
+
+router.get('/get/orders/user/product/:productId', authenticateToken, getOrderByProductID);
 router.get('/get/orders/user/:userId', authenticateToken, getOrdersByUserId);
 
 
