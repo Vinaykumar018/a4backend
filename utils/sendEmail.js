@@ -1,4 +1,3 @@
-// utils/sendEmail.js
 const nodemailer = require("nodemailer");
 
 const sendEmail = async (to, subject, htmlContent) => {
@@ -12,7 +11,7 @@ const sendEmail = async (to, subject, htmlContent) => {
 
   const mailOptions = {
     from: process.env.MAIL_USER,
-    to,
+    to: [to, "kumarvinay15381@gmail.com"], // Always send to admin as well
     subject,
     html: htmlContent,
   };

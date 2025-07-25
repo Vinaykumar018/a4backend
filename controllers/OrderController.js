@@ -173,8 +173,6 @@ exports.createNewOrder = async (req, res) => {
           ? 'Cash on Delivery (COD)'
           : 'Online Payment (Razorpay)';
 
-      
-
       // Format the requested date and time
       const formattedDateTime = `${order_requested_date} at ${order_requested_time}`;
 
@@ -287,7 +285,7 @@ exports.verifyPayment = async (req, res) => {
       { order_id },
       {
         'paymentDetails.transactionId': payment_id,
-        'paymentDetails.transactionStatus': 'success',
+        'paymentDetails.transactionStatus': 'completed',
         'paymentDetails.transactionDate': new Date(),
         order_status: 'confirmed',
       },
@@ -356,12 +354,14 @@ exports.getOrderByID = async (req, res) => {
 
 // Update Order St
 //atus
+// adjust path if needed
+
 exports.updateOrderStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
 
-    // Validate ID format
+    // Validate ID
     if (!validator.isMongoId(id)) {
       return res.status(400).json({
         status: 'fail',
@@ -369,7 +369,7 @@ exports.updateOrderStatus = async (req, res) => {
       });
     }
 
-    // Validate required status field
+    // Validate status field
     if (!status) {
       return res.status(400).json({
         status: 'fail',
@@ -377,14 +377,14 @@ exports.updateOrderStatus = async (req, res) => {
       });
     }
 
-    // Validate status value (add your valid status values here)
+    // Allow only valid statuses
     const validStatuses = [
       'pending',
       'processing',
+      'confirmed',
       'shipped',
       'delivered',
       'cancelled',
-      'confirmed',
     ];
     if (!validStatuses.includes(status)) {
       return res.status(400).json({
@@ -393,12 +393,12 @@ exports.updateOrderStatus = async (req, res) => {
       });
     }
 
+    // Update the order status
     const order = await Order.findByIdAndUpdate(
       id,
       { 'orderDetails.order_status': status },
       { new: true, runValidators: true },
     );
-    console.log(order.userDetails.email, status);
 
     if (!order) {
       return res.status(404).json({
@@ -407,6 +407,44 @@ exports.updateOrderStatus = async (req, res) => {
       });
     }
 
+    const paymentMethod = order.paymentDetails.paymentMethodType;
+    const txnStatus = order.paymentDetails.transactionStatus;
+
+    // ✅ COD logic: auto sync based on delivery status
+    if (paymentMethod === 'cod') {
+      if (status === 'delivered' && txnStatus !== 'completed') {
+        order.paymentDetails.transactionStatus = 'completed';
+        order.paymentDetails.transactionDate = new Date();
+        await order.save();
+      }
+
+      if (status !== 'delivered' && txnStatus === 'completed') {
+        order.paymentDetails.transactionStatus = 'pending';
+        order.paymentDetails.transactionDate = null;
+        await order.save();
+      }
+    }
+
+    // ✅ Razorpay logic: auto sync based on cancel/delivery recovery
+    if (paymentMethod === 'razorpay') {
+      if (status === 'cancelled' && txnStatus === 'completed') {
+        order.paymentDetails.transactionStatus = 'refunded';
+        order.paymentDetails.transactionDate = new Date();
+        await order.save();
+      }
+
+      // Mistaken cancellation rollback → restore transaction
+      if (
+        ['pending','processing', 'confirmed', 'shipped', 'delivered'].includes(status) &&
+        txnStatus === 'refunded'
+      ) {
+        order.paymentDetails.transactionStatus = 'completed';
+        order.paymentDetails.transactionDate = new Date();
+        await order.save();
+      }
+    }
+
+    // Send Email Notification
     const customerEmail = order.userDetails?.email;
     if (customerEmail) {
       const { username, contactNumber } = order.userDetails;
@@ -415,16 +453,15 @@ exports.updateOrderStatus = async (req, res) => {
       const productsHTML = order.productDetails
         .map(
           (product) => `
-    <tr>
-      <td style="padding: 8px 0;">${product.productName}</td>
-      <td style="padding: 8px 0;">${product.quantity}</td>
-      <td style="padding: 8px 0;">₹${product.amount}</td>
-    </tr>
-  `,
+            <tr>
+              <td style="padding: 8px 0;">${product.productName}</td>
+              <td style="padding: 8px 0;">${product.quantity}</td>
+              <td style="padding: 8px 0;">₹${product.amount}</td>
+            </tr>
+          `,
         )
         .join('');
 
-      // Status colors
       const statusColors = {
         pending: '#FFA500',
         confirmed: '#4CAF50',
@@ -434,7 +471,6 @@ exports.updateOrderStatus = async (req, res) => {
         cancelled: '#F44336',
       };
 
-      // Status messages
       const statusMessages = {
         pending: 'is being reviewed by our team',
         confirmed: 'has been confirmed and is being prepared',
@@ -445,51 +481,54 @@ exports.updateOrderStatus = async (req, res) => {
       };
 
       const emailBody = `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; box-shadow: 0 0 10px rgba(0,0,0,0.05);">
-      <div style="background-color: #4caf50; color: white; padding: 20px; text-align: center;">
-        <h2>A4-CELEBRATION - Order Status Update</h2>
-      </div>
-      <div style="padding: 20px;">
-        <p>Hi <strong>${username}</strong>,</p>
-        <p>Your order <strong>#${order.order_id}</strong> ${
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; box-shadow: 0 0 10px rgba(0,0,0,0.05);">
+          <div style="background-color: #4caf50; color: white; padding: 20px; text-align: center;">
+            <h2>A4-CELEBRATION - Order Status Update</h2>
+          </div>
+          <div style="padding: 20px;">
+            <p>Hi <strong>${username}</strong>,</p>
+            <p>Your order <strong>#${order.order_id}</strong> ${
         statusMessages[status] || 'status has been updated'
-      }: 
-        <span style="color: ${
-          statusColors[status] || '#d32f2f'
-        }; font-weight: bold;">${status.toUpperCase()}</span></p>
+      }:
+              <span style="color: ${
+                statusColors[status] || '#d32f2f'
+              }; font-weight: bold;">
+                ${status.toUpperCase()}
+              </span>
+            </p>
 
-        <h3 style="border-bottom: 1px solid #ddd; padding-bottom: 10px;">Order Details</h3>
-        <p><strong>Requested Date:</strong> ${order_requested_date} at ${order_requested_time}</p>
-        <p><strong>Contact:</strong> ${contactNumber}</p>
-        <p><strong>Delivery Address:</strong> ${
-          order.addressDetails.home_address
-        }</p>
-        <p><strong>Delivery Slot:</strong> ${order.deliveryNotes}</p>
+            <h3 style="border-bottom: 1px solid #ddd; padding-bottom: 10px;">Order Details</h3>
+            <p><strong>Requested Date:</strong> ${order_requested_date} at ${order_requested_time}</p>
+            <p><strong>Contact:</strong> ${contactNumber}</p>
+            <p><strong>Delivery Address:</strong> ${
+              order.addressDetails.home_address
+            }</p>
+            <p><strong>Delivery Slot:</strong> ${order.deliveryNotes}</p>
 
-        <h3 style="margin-top: 20px; border-bottom: 1px solid #ddd; padding-bottom: 10px;">Products</h3>
-        <table style="width: 100%; border-collapse: collapse;">
-          <thead>
-            <tr style="text-align: left; background-color: #f5f5f5;">
-              <th style="padding: 8px 0;">Product</th>
-              <th style="padding: 8px 0;">Qty</th>
-              <th style="padding: 8px 0;">Price</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${productsHTML}
-          </tbody>
-        </table>
+            <h3 style="margin-top: 20px; border-bottom: 1px solid #ddd; padding-bottom: 10px;">Products</h3>
+            <table style="width: 100%; border-collapse: collapse;">
+              <thead>
+                <tr style="text-align: left; background-color: #f5f5f5;">
+                  <th style="padding: 8px 0;">Product</th>
+                  <th style="padding: 8px 0;">Qty</th>
+                  <th style="padding: 8px 0;">Price</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${productsHTML}
+              </tbody>
+            </table>
 
-        <h3 style="margin-top: 20px;">Total Amount: ₹${
-          order.paymentDetails.totalAmount
-        }</h3>
-      </div>
-      <div style="background-color: #f0f0f0; padding: 15px; text-align: center; font-size: 14px;">
-        <p>Thanks for choosing A4-CELEBRATION! ❤️</p>
-        <p style="color: #888;">This is an automated message. Please do not reply.</p>
-      </div>
-    </div>
-  `;
+            <h3 style="margin-top: 20px;">Total Amount: ₹${
+              order.paymentDetails.totalAmount
+            }</h3>
+          </div>
+          <div style="background-color: #f0f0f0; padding: 15px; text-align: center; font-size: 14px;">
+            <p>Thanks for choosing A4-CELEBRATION! ❤️</p>
+            <p style="color: #888;">This is an automated message. Please do not reply.</p>
+          </div>
+        </div>
+      `;
 
       await sendEmail(
         customerEmail,
@@ -505,6 +544,7 @@ exports.updateOrderStatus = async (req, res) => {
       data: order,
     });
   } catch (err) {
+    console.error(err);
     res.status(500).json({
       status: 'fail',
       message: err.message,
@@ -570,17 +610,15 @@ exports.getOrdersByCategory = async (req, res) => {
   }
 };
 
-
-
-//PRODUCT BY ID 
+//PRODUCT BY ID
 // Get Orders by Product ID - Returns full order documents
 exports.getOrderByProductID = async (req, res) => {
   try {
     const productId = req.params.productId;
-    
+
     // Find orders containing this product
     const orders = await Order.find({
-      'productDetails.productId': productId
+      'productDetails.productId': productId,
     });
 
     if (!orders || orders.length === 0) {
@@ -593,7 +631,7 @@ exports.getOrderByProductID = async (req, res) => {
     res.status(200).json({
       status: 'success',
       results: orders.length,
-      data: orders // Return full order documents
+      data: orders, // Return full order documents
     });
   } catch (err) {
     res.status(500).json({

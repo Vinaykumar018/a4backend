@@ -8,7 +8,9 @@ const {
   updateUser,
   getUserById,
   forgotPassword,
-  getAllUsers
+  getAllUsers,
+  updateUserStatus,
+  deleteUserById
 } = require('../controllers/userController');
 const {
   createCategory,
@@ -85,6 +87,12 @@ const {
 } = require('../controllers/customizedRequests');
 
 
+const {
+  createCoupon,
+  getAllCoupons,
+  applyCoupon
+} = require('../controllers/couponController');
+
 
 const {
   addToWishlist,
@@ -94,7 +102,7 @@ const {
 
 
 const { googleAuth } = require('../controllers/googleAuthController');
-const { createContact } = require('../controllers/contactController');
+const { createContact,getAllContacts } = require('../controllers/contactController');
 //api authentication
 router.post('/signin', signin);
 router.post('/signin', (req, res, next) => {
@@ -109,6 +117,8 @@ router.put('/user/update-user/:id', authenticateToken, updateUser);
 router.get('/user/get-user/:id', authenticateToken, getUserById);
 router.get('/auth/google', authenticateToken, googleAuth);
 router.post('/auth/forget-password', authenticateToken, forgotPassword);
+router.put('/user/update-status/:id', authenticateToken,updateUserStatus);
+router.delete('/user/delete-user/:id', authenticateToken, deleteUserById);
 
 //category
 
@@ -239,6 +249,7 @@ router.get('/customized/get-all-requests/:user_id', authenticateToken, getCustom
 //form contact
 
 router.post('/contact',authenticateToken,createContact);
+router.get('/get/contacts',authenticateToken,getAllContacts);
 
 
 
@@ -248,6 +259,11 @@ router.post("/addtoWishlist",authenticateToken, addToWishlist);
 router.get("/getWishlist/:userId",authenticateToken,  getWishlist);
 router.delete("/wishlist/:userId/:productId",authenticateToken, removeFromWishlist);
 
+
+
+router.post('/create/coupon', createCoupon);
+router.get('/get/allcoupons', getAllCoupons);
+router.post('/apply/coupon', applyCoupon);
 
 
 module.exports = router;

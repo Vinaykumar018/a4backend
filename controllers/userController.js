@@ -214,3 +214,76 @@ function generateStrongPassword() {
   // Shuffle the array and join to form password
   return password.sort(() => Math.random() - 0.5).join('');
 }
+
+
+// UPDATE USER STATUS (Active/Inactive)
+// UPDATE USER STATUS (Active/Inactive)
+exports.updateUserStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    
+      
+    
+
+    const user = await User.findByIdAndUpdate(
+      id,
+      { status, updated_at: new Date() },
+      { new: true }
+    ).select('-password');
+
+    if (!user) {
+      return res.status(404).json({ 
+        message: 'User not found', 
+        status: 0 
+      });
+    }
+
+    res.json({ 
+      message: 'User status updated successfully', 
+      status: 1, 
+      data: user 
+    });
+  } catch (err) {
+    res.status(500).json({ 
+      message: err.message, 
+      status: 0 
+    });
+  }
+};
+
+
+// DELETE USER BY ID
+exports.deleteUserById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const user = await User.findByIdAndDelete(id);
+
+    if (!user) {
+      return res.status(404).json({ 
+        message: 'User not found', 
+        status: 0 
+      });
+    }
+
+    // Delete profile image if exists
+    if (user.profile_image) {
+      const imagePath = path.join(__dirname, '../public', user.profile_image);
+      if (fs.existsSync(imagePath)) {
+        fs.unlinkSync(imagePath);
+      }
+    }
+
+    res.json({ 
+      message: 'User deleted successfully', 
+      status: 1 
+    });
+  } catch (err) {
+    res.status(500).json({ 
+      message: err.message, 
+      status: 0 
+    });
+  }
+};

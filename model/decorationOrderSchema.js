@@ -2,8 +2,8 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const orderSchema = new Schema({
+  order_id: { type: String, required: true, unique: true },
 
-    order_id: { type: String, required: true, unique: true },
   // User Details
   userDetails: {
     userId: { type: String, required: true },
@@ -27,29 +27,30 @@ const orderSchema = new Schema({
       productName: { type: String, required: true },
       amount: { type: Number, required: true },
       quantity: { type: Number, required: true },
+      service_date: { type: String }, // Added for product-specific service date
+      service_time: { type: String }  // Added for product-specific service time
     },
   ],
 
   // Payment Details
   paymentDetails: {
-  totalAmount: { type: Number, required: true },
-  transactionId: { type: String, default: null },
-  transactionStatus: {
-    type: String,
-    default: 'pending',
-    enum: ['pending', 'completed', 'failed', 'refunded'],
+    totalAmount: { type: Number, required: true },
+    transactionId: { type: String, default: null },
+    transactionStatus: {
+      type: String,
+      default: 'pending',
+      enum: ['pending', 'completed', 'failed', 'refunded'],
+    },
+    transactionDate: { type: Date, default: null },
+    paymentMethodType: { type: String, required: true },
   },
-  transactionDate: { type: Date, default: null },
-  paymentMethodType: { type: String, required: true }, // ✅ New field added
-}
-,
 
-  // Order data
+  // Order Details
   orderDetails: {
     order_status: {
       type: String,
-      default: 'processing',
-      enum: ['pending','processing', 'shipped', 'delivered', 'cancelled', 'returned','confirmed'],
+      default: 'pending',
+      enum: ['pending', 'processing', 'confirmed', 'shipped', 'delivered', 'cancelled'],
     },
     order_requested_date: {
       type: String,
@@ -63,18 +64,28 @@ const orderSchema = new Schema({
       {
         productId: { type: String, required: true },
         quantity: { type: Number, required: true },
+        
+        order_requested_date: {  // Added product-specific date
+          type: String,
+          default: null
+        },
+        order_requested_time: {  // Added product-specific time
+          type: String,
+          default: null
+        },
+        lastUpdated: { type: Date, default: Date.now }  // Added for tracking updates
       },
     ],
     lastUpdated: { type: Date, default: Date.now },
-  }, // <-- THIS COMMA WAS MISSING
+  },
 
-  // Additional fields that might be useful
+  // Optional Fields
   deliveryNotes: { type: String },
   discountApplied: { type: Number, default: 0 },
   shippingMethod: { type: String },
 });
 
-// Create the model
+// Model
 const Order = mongoose.model('a4-orders', orderSchema);
 
 module.exports = Order;

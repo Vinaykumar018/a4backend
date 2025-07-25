@@ -31,13 +31,21 @@ const decorationSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  mrp_price:{
+     type: Number,
+    required: true
+
+  },
   price: {
     type: Number,
     required: true
   },
+
+  
+  
   unit: {
     type: String,
-    required: true
+   
   },
   stock_left: {
     type: Number,

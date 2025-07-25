@@ -17,6 +17,7 @@ exports.giftsCreateProduct = [
         category,
         category_name,
         price,
+        mrp_price,
         unit,
         stock_left,
         isOffer,
@@ -24,7 +25,7 @@ exports.giftsCreateProduct = [
         child_categories = null
       } = req.body;
 
-      if (!name || !slug_url || !price || !unit || !category_name || !category) {
+      if (!name || !slug_url || !price || !mrp_price || !category_name || !category) {
         return res.status(400).json({ message: 'Missing required fields', status: 0 });
       }
 
@@ -37,6 +38,7 @@ exports.giftsCreateProduct = [
         category,
         category_name,
         price,
+        mrp_price,
         unit,
         stock_left,
         isOffer,
