@@ -314,7 +314,8 @@ exports.verifyPayment = async (req, res) => {
 // Get All Orders
 exports.getAllOrders = async (req, res) => {
   try {
-    const orders = await Order.find();
+    const orders = await Order.find().sort({ createdAt: -1 });
+    console.log(orders)
     res.status(200).json({
       status: 'success',
       results: orders.length,

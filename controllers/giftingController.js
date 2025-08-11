@@ -4,6 +4,7 @@ const path = require('path');
 const fs = require('fs');
 
 // CREATE GIFTING PRODUCT
+// CREATE GIFTING PRODUCT
 exports.giftsCreateProduct = [
   upload,
   async (req, res) => {
@@ -22,13 +23,42 @@ exports.giftsCreateProduct = [
         stock_left,
         isOffer,
         status,
-        child_categories = null
+        child_categories,
+        available_cities
       } = req.body;
 
+      // Validate required fields
       if (!name || !slug_url || !price || !mrp_price || !category_name || !category) {
         return res.status(400).json({ message: 'Missing required fields', status: 0 });
       }
 
+      // Parse JSON fields if sent as strings (from FormData)
+      let parsedChildCategories = null;
+      let parsedAvailableCities = [];
+
+      try {
+        parsedChildCategories = child_categories
+          ? JSON.parse(child_categories)
+          : null;
+      } catch (err) {
+        return res.status(400).json({ 
+          message: 'Invalid JSON in child_categories', 
+          status: 0 
+        });
+      }
+
+      try {
+        parsedAvailableCities = Array.isArray(available_cities)
+          ? available_cities
+          : JSON.parse(available_cities || '[]');
+      } catch (err) {
+        return res.status(400).json({ 
+          message: 'Invalid JSON in available_cities', 
+          status: 0 
+        });
+      }
+
+      // Create new product
       const newProduct = new Product({
         product_id,
         name,
@@ -43,11 +73,17 @@ exports.giftsCreateProduct = [
         stock_left,
         isOffer,
         status,
-        child_categories: JSON.parse(child_categories || 'null')
+        child_categories: parsedChildCategories,
+        available_cities: parsedAvailableCities
       });
 
+      // Handle images
       if (req.files?.featured_image) {
-        newProduct.featured_image = path.join('uploads', 'products', req.files.featured_image[0].filename);
+        newProduct.featured_image = path.join(
+          'uploads', 
+          'products', 
+          req.files.featured_image[0].filename
+        );
       }
 
       if (req.files?.other_images) {
@@ -56,10 +92,19 @@ exports.giftsCreateProduct = [
         );
       }
 
+      // Save to DB
       await newProduct.save();
-      res.status(200).json({ message: 'Gifting product created', status: 1, data: newProduct });
+
+      res.status(200).json({ 
+        message: 'Gifting product created', 
+        status: 1, 
+        data: newProduct 
+      });
     } catch (err) {
-      res.status(500).json({ message: err.message, status: 0 });
+      res.status(500).json({ 
+        message: err.message, 
+        status: 0 
+      });
     }
   }
 ];
@@ -71,22 +116,57 @@ exports.giftsUpdateProduct = [
     try {
       const { id } = req.params;
       const product = await Product.findById(id);
-      if (!product) return res.status(404).json({ message: 'Product not found', status: 0 });
+      if (!product) {
+        return res.status(404).json({ 
+          message: 'Product not found', 
+          status: 0 
+        });
+      }
 
       const updateData = { ...req.body };
 
+      // Parse child_categories if present
       if ('child_categories' in req.body) {
-        updateData.child_categories = JSON.parse(req.body.child_categories || 'null');
+        try {
+          updateData.child_categories = req.body.child_categories
+            ? JSON.parse(req.body.child_categories)
+            : null;
+        } catch (err) {
+          return res.status(400).json({
+            message: 'Invalid JSON in child_categories',
+            status: 0,
+          });
+        }
       }
 
+      // Parse available_cities if present
+      if ('available_cities' in req.body) {
+        try {
+          updateData.available_cities = Array.isArray(req.body.available_cities)
+            ? req.body.available_cities
+            : JSON.parse(req.body.available_cities || '[]');
+        } catch (err) {
+          return res.status(400).json({
+            message: 'Invalid JSON in available_cities',
+            status: 0,
+          });
+        }
+      }
+
+      // Handle featured image replacement
       if (req.files?.featured_image) {
         if (product.featured_image) {
           const oldPath = path.join(__dirname, '../public', product.featured_image);
           if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
         }
-        updateData.featured_image = path.join('uploads', 'products', req.files.featured_image[0].filename);
+        updateData.featured_image = path.join(
+          'uploads', 
+          'products', 
+          req.files.featured_image[0].filename
+        );
       }
 
+      // Handle other images replacement
       if (req.files?.other_images) {
         if (product.other_images?.length) {
           product.other_images.forEach(img => {
@@ -99,10 +179,22 @@ exports.giftsUpdateProduct = [
         );
       }
 
-      const updatedProduct = await Product.findByIdAndUpdate(id, updateData, { new: true });
-      res.json({ message: 'Product updated', status: 1, data: updatedProduct });
+      const updatedProduct = await Product.findByIdAndUpdate(
+        id, 
+        updateData, 
+        { new: true }
+      );
+
+      res.json({ 
+        message: 'Gifting product updated', 
+        status: 1, 
+        data: updatedProduct 
+      });
     } catch (err) {
-      res.status(500).json({ message: err.message, status: 0 });
+      res.status(500).json({ 
+        message: err.message, 
+        status: 0 
+      });
     }
   }
 ];

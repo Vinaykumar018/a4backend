@@ -7,7 +7,7 @@ const ratingSchema = new mongoose.Schema({
     required: true
   },
   product_id: {
-    type: mongoose.Schema.Types.ObjectId,
+    type: String,
     ref: 'Product',  // Refers to the Product model
     required: true
   },

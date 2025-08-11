@@ -73,6 +73,10 @@ const giftingProductSchema = new mongoose.Schema(
       ],
       default: null,
     },
+    available_cities: {
+      type: [String],
+      default: [],
+    },
   },
   { timestamps: true },
 );

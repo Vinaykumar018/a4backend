@@ -74,6 +74,10 @@ const decorationSchema = new mongoose.Schema({
       name: String
     }],
     default: null
+  },
+   available_cities: {
+    type: [String],
+    default: []
   }
 }, { timestamps: true });
 
